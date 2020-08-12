@@ -5,6 +5,7 @@ import { Router } from "@angular/router";
 import { AngularFireAuth } from "angularfire2/auth";
 import { ToastrService } from 'ngx-toastr';
 import { TrainingService } from '../training/training.service';
+import { UIService } from '../shared/ui.service';
 
 @Injectable({
   providedIn: "root",
@@ -15,28 +16,34 @@ export class AuthService {
   constructor(private router: Router,
      private afAuth: AngularFireAuth,
      private tosterService:ToastrService,
-     private trainingService:TrainingService
+     private trainingService:TrainingService,
+     private uiService:UIService
      ) {}
 
   registerUser(authData: AuthData) {
+    this.uiService.loadingstateChanged.next(true);
     this.afAuth.auth
       .createUserWithEmailAndPassword(authData.email, authData.password)
       .then((result) => {
-
+        this.uiService.loadingstateChanged.next(false);
       })
       .catch((error) => {
+        this.uiService.loadingstateChanged.next(false);
         this.tosterService.error(error.message,null);
 
       });
   }
 
   login(authData: AuthData) {
+    this.uiService.loadingstateChanged.next(true);
     this.afAuth.auth
       .signInWithEmailAndPassword(authData.email, authData.password)
       .then((result) => {
-
+        this.uiService.loadingstateChanged.next(false);
+        this.tosterService.success("Login Successfully!.");
       })
       .catch((error) => {
+        this.uiService.loadingstateChanged.next(false);
         this.tosterService.error(error.message,null);
         console.log(error);
 
@@ -48,13 +55,12 @@ export class AuthService {
       if(user){
         this.isAuthenticated=true;
         this.authChange.next(true);
-        this.tosterService.success("Login Successfully!.");
         this.router.navigate(["/training"]);
       }else{
         this.trainingService.cancelSubscription();
         this.authChange.next(false);
-        this.router.navigate(["/login"]);
         this.isAuthenticated=false;
+        this.router.navigate(["/login"]);
       }
     })
   }
